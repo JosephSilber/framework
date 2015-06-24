@@ -808,7 +808,7 @@ class Builder
     {
         $value;
 
-        $this->where(function($query) use ($parameters, &$value) {
+        $this->where(function($query) use ($scope, $parameters, &$value) {
             array_unshift($parameters, $query);
 
             $result = call_user_func_array([$this->model, $scope], $parameters);
