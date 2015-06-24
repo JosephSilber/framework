@@ -802,13 +802,26 @@ class Builder
      *
      * @param  string  $scope
      * @param  array   $parameters
-     * @return \Illuminate\Database\Query\Builder
+     * @return mixed
      */
     protected function callScope($scope, $parameters)
     {
-        array_unshift($parameters, $this);
+        $value;
 
-        return call_user_func_array([$this->model, $scope], $parameters) ?: $this;
+        $this->where(function($query) use ($parameters, &$value) {
+            array_unshift($parameters, $query);
+
+            $result = call_user_func_array([$this->model, $scope], $parameters);
+
+            // We want to let the developer return any arbitrary value from the query scope.
+            // However, if the nested query is returned we'll not return it, and let the
+            // magic __call method return the parent query for fluent query building.
+            if ($result != $query) {
+                $value = $result;
+            }
+        });
+
+        return $value ?: $this;
     }
 
     /**
