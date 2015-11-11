@@ -1537,11 +1537,11 @@ class Builder
      */
     public function pluck($column, $key = null)
     {
-        $columns = $this->getPluckSelect($column, $key);
+        list($qualified, $unqualified) = $this->getPluckColumns($column, $key);
 
-        $results = new Collection($this->get($columns));
+        $results = new Collection($this->get($qualified));
 
-        return $results->pluck($columns[0], Arr::get($columns, 1))->all();
+        return $results->pluck($unqualified[0], Arr::get($unqualified, 1))->all();
     }
 
     /**
@@ -1565,18 +1565,17 @@ class Builder
      * @param  string  $key
      * @return array
      */
-    protected function getPluckSelect($column, $key)
+    protected function getPluckColumns($column, $key)
     {
-        $select = is_null($key) ? [$column] : [$column, $key];
+        $qualified = is_null($key) ? [$column] : [$column, $key];
 
-        // If the selected columns contain "dots", we will remove it so that the pluck
-        // operation can run normally. Specifying the table is not needed, since we
-        // really want the names of the columns as it is in this resulting array.
-        return array_map(function ($column) {
+        $unqualified = array_map(function ($column) {
             $dot = strpos($column, '.');
 
             return $dot === false ? $column : substr($column, $dot + 1);
-        }, $select);
+        }, $qualified);
+
+        return [$qualified, $unqualified];
     }
 
     /**
