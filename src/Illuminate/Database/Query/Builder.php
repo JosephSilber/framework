@@ -1570,9 +1570,7 @@ class Builder
         $qualified = is_null($key) ? [$column] : [$column, $key];
 
         $unqualified = array_map(function ($column) {
-            $dot = strpos($column, '.');
-
-            return $dot === false ? $column : substr($column, $dot + 1);
+            return last(explode('.', $column));
         }, $qualified);
 
         return [$qualified, $unqualified];
