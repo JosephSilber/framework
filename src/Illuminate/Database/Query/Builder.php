@@ -1528,7 +1528,7 @@ class Builder
         return true;
     }
 
-    /**
+        /**
      * Get an array with the values of a given column.
      *
      * @param  string  $column
@@ -1537,11 +1537,10 @@ class Builder
      */
     public function pluck($column, $key = null)
     {
-        list($qualified, $unqualified) = $this->getPluckColumns($column, $key);
+        $columns = is_null($key) ? [$column] : [$column, $key];
+        $results = $this->get($columns);
 
-        $results = new Collection($this->get($qualified));
-
-        return $results->pluck($unqualified[0], Arr::get($unqualified, 1))->all();
+        return Arr::pluck($results, $this->stripTable($column), $this->stripTable($key));
     }
 
     /**
@@ -1559,21 +1558,13 @@ class Builder
     }
 
     /**
-     * Get the columns that should be used in a pluck select.
+     * Strip off the table name or alias from a column identifier
      *
-     * @param  string  $column
-     * @param  string  $key
-     * @return array
+     * @param string $column
+     * @return string
      */
-    protected function getPluckColumns($column, $key)
-    {
-        $qualified = is_null($key) ? [$column] : [$column, $key];
-
-        $unqualified = array_map(function ($column) {
-            return last(explode('.', $column));
-        }, $qualified);
-
-        return [$qualified, $unqualified];
+    protected function stripTable($column) {
+        return is_null($column) ? $column : last(explode('.', $column));
     }
 
     /**
