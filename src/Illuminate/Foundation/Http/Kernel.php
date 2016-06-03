@@ -44,6 +44,13 @@ class Kernel implements KernelContract
     ];
 
     /**
+     * The priority-sorted list of middleware.
+     *
+     * @var array
+     */
+    protected $middlewarePriority = [];
+
+    /**
      * The application's middleware stack.
      *
      * @var array
@@ -83,6 +90,8 @@ class Kernel implements KernelContract
         foreach ($this->routeMiddleware as $key => $middleware) {
             $router->middleware($key, $middleware);
         }
+
+        $router->middlewarePriority = $this->middlewarePriority;
     }
 
     /**

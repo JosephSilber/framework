@@ -72,6 +72,13 @@ class Router implements RegistrarContract
     protected $middlewareGroups = [];
 
     /**
+     * The priority-sorted list of middleware.
+     *
+     * @var array
+     */
+    public $middlewarePriority = [];
+
+    /**
      * The registered route value binders.
      *
      * @var array
@@ -645,10 +652,11 @@ class Router implements RegistrarContract
      */
     public function gatherRouteMiddlewares(Route $route)
     {
-        return Collection::make($route->middleware())->map(function ($name) {
+        $middleware = Collection::make($route->middleware())->map(function ($name) {
             return Collection::make($this->resolveMiddlewareClassName($name));
-        })
-        ->flatten()->all();
+        })->flatten();
+
+        return $middleware->sort($this->sortMiddlewareCallback($middleware))->values()->all();
     }
 
     /**
@@ -719,6 +727,23 @@ class Router implements RegistrarContract
         }
 
         return $results;
+    }
+
+    /**
+     * Get the callback for sorting the middleware according to priority.
+     *
+     * @param  \Illuminate\Support\Collection  $middleware
+     * @return \Closure
+     */
+    protected function sortMiddlewareCallback($middleware)
+    {
+        $priority = Collection::make($this->middlewarePriority);
+
+        return function ($a, $b) use ($middleware, $priority) {
+            $compare = $priority->contains($a) && $priority->contains($b) ? $priority : $middleware;
+
+            return $compare->search($a) < $compare->search($b) ? -1 : 1;
+        };
     }
 
     /**
