@@ -115,10 +115,10 @@ class Gate implements GateContract
      */
     protected function buildAbilityCallback($callback)
     {
-        return function () use ($callback) {
+        return function (...$arguments) use ($callback) {
             list($class, $method) = explode('@', $callback);
 
-            return call_user_func_array([$this->resolvePolicy($class), $method], func_get_args());
+            return $this->resolvePolicy($class)->$method(...$arguments);
         };
     }
 
@@ -264,9 +264,7 @@ class Gate implements GateContract
             $user, $ability, $arguments
         );
 
-        return call_user_func_array(
-            $callback, array_merge([$user], $arguments)
-        );
+        return $callback(...array_merge([$user], $arguments));
     }
 
     /**
@@ -282,7 +280,7 @@ class Gate implements GateContract
         $arguments = array_merge([$user, $ability], [$arguments]);
 
         foreach ($this->beforeCallbacks as $before) {
-            if (! is_null($result = call_user_func_array($before, $arguments))) {
+            if (! is_null($result = $before(...$arguments))) {
                 return $result;
             }
         }
@@ -302,7 +300,7 @@ class Gate implements GateContract
         $arguments = array_merge([$user, $ability, $result], [$arguments]);
 
         foreach ($this->afterCallbacks as $after) {
-            call_user_func_array($after, $arguments);
+            $after(...$arguments);
         }
     }
 
@@ -363,11 +361,7 @@ class Gate implements GateContract
                 // We will prepend the user and ability onto the arguments so that the before
                 // callback can determine which ability is being called. Then we will call
                 // into the policy before methods with the arguments and get the result.
-                $beforeArguments = array_merge([$user, $ability], $arguments);
-
-                $result = call_user_func_array(
-                    [$instance, 'before'], $beforeArguments
-                );
+                $result = $instance->before(...array_merge([$user, $ability], $arguments));
 
                 // If we received a non-null result from the before method, we will return it
                 // as the result of a check. This allows developers to override the checks
@@ -392,9 +386,7 @@ class Gate implements GateContract
                 return false;
             }
 
-            return call_user_func_array(
-                [$instance, $ability], array_merge([$user], $arguments)
-            );
+            return $instance->$ability(...array_merge([$user], $arguments));
         };
     }
 

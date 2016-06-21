@@ -761,7 +761,7 @@ class Builder
 
             $this->query->addNestedWhereQuery($query->getQuery(), $boolean);
         } else {
-            call_user_func_array([$this->query, 'where'], func_get_args());
+            $this->query->where(...func_get_args());
         }
 
         return $this;
@@ -1145,7 +1145,7 @@ class Builder
         // query as their own isolated nested where statement and avoid issues.
         $originalWhereCount = count($query->wheres);
 
-        $result = call_user_func_array($scope, $parameters) ?: $this;
+        $result = $scope(...$parameters) ?: $this;
 
         if ($this->shouldNestWheresForScope($query, $originalWhereCount)) {
             $this->nestWheresForScope($query, $originalWhereCount);
@@ -1374,7 +1374,7 @@ class Builder
         if (isset($this->macros[$method])) {
             array_unshift($parameters, $this);
 
-            return call_user_func_array($this->macros[$method], $parameters);
+            return $this->macros[$method](...$parameters);
         }
 
         if (method_exists($this->model, $scope = 'scope'.ucfirst($method))) {
@@ -1382,10 +1382,10 @@ class Builder
         }
 
         if (in_array($method, $this->passthru)) {
-            return call_user_func_array([$this->toBase(), $method], $parameters);
+            return $this->toBase()->$method(...$parameters);
         }
 
-        call_user_func_array([$this->query, $method], $parameters);
+        $this->query->$method(...$parameters);
 
         return $this;
     }

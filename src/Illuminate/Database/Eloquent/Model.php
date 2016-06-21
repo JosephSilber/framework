@@ -3472,12 +3472,12 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
     public function __call($method, $parameters)
     {
         if (in_array($method, ['increment', 'decrement'])) {
-            return call_user_func_array([$this, $method], $parameters);
+            return $this->$method(...$parameters);
         }
 
         $query = $this->newQuery();
 
-        return call_user_func_array([$query, $method], $parameters);
+        return $query->$method(...$parameters);
     }
 
     /**
@@ -3489,9 +3489,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
      */
     public static function __callStatic($method, $parameters)
     {
-        $instance = new static;
-
-        return call_user_func_array([$instance, $method], $parameters);
+        return (new static)->$method(...$parameters);
     }
 
     /**

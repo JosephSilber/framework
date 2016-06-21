@@ -205,7 +205,7 @@ class Dispatcher implements DispatcherContract
         $responses = [];
 
         // If an array is not given to us as the payload, we will turn it into one so
-        // we can easily use call_user_func_array on the listeners, passing in the
+        // we can easily spread it as arguments into the listeners, passing in the
         // payload to each of them so that they receive each of these arguments.
         if (! is_array($payload)) {
             $payload = [$payload];
@@ -218,7 +218,7 @@ class Dispatcher implements DispatcherContract
         }
 
         foreach ($this->getListeners($event) as $listener) {
-            $response = call_user_func_array($listener, $payload);
+            $response = $listener(...$payload);
 
             // If a response is returned from the listener and event halting is enabled
             // we will just return this response, and not call the rest of the event
@@ -315,9 +315,7 @@ class Dispatcher implements DispatcherContract
         if (isset($this->listeners[$eventName])) {
             krsort($this->listeners[$eventName]);
 
-            $this->sorted[$eventName] = call_user_func_array(
-                'array_merge', $this->listeners[$eventName]
-            );
+            $this->sorted[$eventName] = array_merge(...$this->listeners[$eventName]);
         }
     }
 
@@ -342,10 +340,10 @@ class Dispatcher implements DispatcherContract
     {
         $container = $this->container;
 
-        return function () use ($listener, $container) {
-            return call_user_func_array(
-                $this->createClassCallable($listener, $container), func_get_args()
-            );
+        return function (...$arguments) use ($listener, $container) {
+            $callable = $this->createClassCallable($listener, $container);
+
+            return $callable(...$arguments);
         };
     }
 
